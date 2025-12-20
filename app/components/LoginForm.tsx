@@ -36,6 +36,8 @@ const LoginForm = () => {
         Cookies.set("token", JSON.stringify(student), { expires: 1 });
         setMessage(response.data.message);
       }
+
+      router.push("/");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message;
@@ -46,7 +48,6 @@ const LoginForm = () => {
       }
     } finally {
       setIsLoading(false);
-      router.push("/");
     }
   }
 
