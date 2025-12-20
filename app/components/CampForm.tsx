@@ -72,7 +72,7 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       // แปลง selectedRoommates ให้เป็น array ของ id เท่านั้น (กรองค่า null ออก)
@@ -91,11 +91,11 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
       const allMembers = [student.id, ...roommateIds];
 
       // เรียก API
-      const response = await axios.post('/api/submit-camp', {
+      const response = await axios.post("/api/submit-camp", {
         camp_id: campInfo[0]?.id,
         members: allMembers,
         note: note,
-      })
+      });
 
       // แสดงข้อความสำเร็จ
       alert("บันทึกห้องพักเรียบร้อย");
@@ -103,11 +103,12 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
       // Reset form
       setSelectedRoommates(Array(campInfo[0]?.max - 1).fill(null));
       setNote("");
-      router.push('/')
+      router.push("/");
     } catch (error: any) {
       console.error("Error:", error);
-      const errorMessage = error.response?.data?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
-      setError(errorMessage)
+      const errorMessage =
+        error.response?.data?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -206,6 +207,7 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
                 หมายเหตุ (Note)
               </label>
               <textarea
+                autoComplete="off"
                 id="note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}

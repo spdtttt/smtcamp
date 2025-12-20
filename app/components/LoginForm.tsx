@@ -89,6 +89,7 @@ const LoginForm = () => {
           <div className="relative text-gray-700">
             <User className="text-gray-700 absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" />
             <input
+              autoComplete="off"
               type="text"
               id="studentId"
               placeholder="เลขประจำตัวนักเรียน"
@@ -110,6 +111,7 @@ const LoginForm = () => {
           <div className="relative text-gray-700">
             <CreditCard className="text-gray-700 absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" />
             <input
+              autoComplete="off"
               type="text"
               id="nationalId"
               placeholder="X-XXXX-XXXXX-XX-X"
