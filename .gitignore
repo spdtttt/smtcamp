@@ -45,5 +45,3 @@ next-env.d.ts
 /app/generated/prisma
 
 /lib/generated/prisma
-
-lib
