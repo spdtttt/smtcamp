@@ -5,6 +5,7 @@ import { User, CreditCard, LogIn } from "lucide-react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import BeatLoader from "react-spinners/BeatLoader";
 
 const LoginForm = () => {
   const [studentId, setStudentId] = useState(""); // รหัสนักเรียน
@@ -49,6 +50,14 @@ const LoginForm = () => {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-self-center">
+        <BeatLoader color="#0a0a4f" />
+      </div>
+    );
   }
 
   return (
