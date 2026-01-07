@@ -47,7 +47,7 @@ const page = async () => {
       <div className="mt-20 opacity-75 mb-25">
         <PastCamp pastCamps={pastCamps as any} />
       </div>
-      <div className="flex flex-col mb-5 font-[Prompt] text-gray-500 font-medium text-center">
+      <div className="fixed bottom-0 left-0 w-full flex justify-center flex-col font-[Prompt] text-gray-500 font-medium text-center py-4">
         <div className="bg-gray-300 w-[85%] self-center h-0.5"></div>
         <p className="mt-2">Created by Mos 6/9 Last Updated: 7 January 2026</p>
       </div>
