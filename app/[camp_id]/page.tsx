@@ -23,11 +23,21 @@ const CampData = async ({
   campInfo: any;
 }) => {
   const availableStudents = await getAvailableStudents(camp_id);
+
+  const existingRooms = await prisma.room.findMany({
+    where: { camp_id: camp_id },
+    select: {
+      id: true,
+      member_ids: true,
+    },
+  });
+
   return (
     <CampForm
       availableStudents={availableStudents}
       campInfo={campInfo}
       student={student}
+      existingRooms={existingRooms}
     />
   );
 };

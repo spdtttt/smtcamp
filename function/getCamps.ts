@@ -39,7 +39,7 @@ export async function getCamps(
         }
       })
       const countStudents = classStudents.length
-      const percentage = camp.max
+      const percentage = camp.roomTypes
         ? (assignedStudents / countStudents) * 100
         : 0;
 

@@ -8,19 +8,44 @@ import AlertTitle from "@mui/material/AlertTitle";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-const CampForm = ({ availableStudents, campInfo, student }: any) => {
-  const [selectedRoommates, setSelectedRoommates] = useState<any[]>(
-    Array(campInfo[0]?.max - 1).fill(null)
-  );
+const CampForm = ({ availableStudents, campInfo, student, existingRooms }: any) => {
+  const [selectedRoomType, setSelectedRoomType] = useState<any>(null);
+  const [selectedRoommates, setSelectedRoommates] = useState<any[]>([]);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const router = useRouter();
 
-  console.log(availableStudents);
-  console.log(campInfo);
-  console.log(student);
+  // ฟังก์ชันคำนวณจำนวนห้องที่ใช้ไปแล้วสำหรับแต่ละรูปแบบ
+  const calculateUsedRooms = (peoplePerRoom: number) => {
+    if (!existingRooms || !Array.isArray(existingRooms)) return 0;
+
+    // นับห้องที่มีจำนวนสมาชิกตรงกับ peoplePerRoom
+    return existingRooms.filter(
+      (room: any) => room.member_ids && room.member_ids.length === peoplePerRoom
+    ).length;
+  };
+
+  // สร้าง options สำหรับเลือกรูปแบบห้อง
+  const roomTypeOptions =
+    campInfo[0]?.roomTypes && Array.isArray(campInfo[0].roomTypes)
+      ? campInfo[0].roomTypes
+          .map((rt: any, index: number) => {
+            const usedRooms = calculateUsedRooms(rt.peoplePerRoom);
+            const remainingRooms = rt.roomCount - usedRooms;
+
+            return {
+              value: index,
+              label: `${rt.peoplePerRoom} คน/ห้อง (เหลือ ${remainingRooms} ห้อง)`,
+              peoplePerRoom: rt.peoplePerRoom,
+              roomCount: rt.roomCount,
+              remainingRooms: remainingRooms,
+              isDisabled: remainingRooms <= 0, // ปิดการเลือกถ้าห้องเต็ม
+            };
+          })
+          .filter((option: any) => !option.isDisabled) // แสดงเฉพาะรูปแบบที่ยังมีห้องว่าง
+      : [];
 
   // กรองรายชื่อนักเรียนให้เลือกได้เฉพาะเพศเดียวกัน และไม่นับผู้ที่ใช้งานหรือเข้าสู่ระบบอยู่
   const filteredStudents = availableStudents.filter((availableStudent: any) => {
@@ -33,7 +58,7 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
   // กรองให้อยู่ในรูปแบบเพื่อนำไปใช้ใน Select
   const studentOptions = filteredStudents.map((student: any) => ({
     value: student.id,
-    label: `${student.name}`, // ปรับตามชื่อ field ที่มี
+    label: `${student.name}`,
   }));
 
   // ฟังก์ชันกรอง options สำหรับแต่ละ Select (ไม่แสดงคนที่ถูกเลือกไปแล้ว)
@@ -49,18 +74,28 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
     );
   };
 
-  // ฟังก์ชันจัดการเมื่อเลือก roommate เพิ่ม (ลบตัวเลือกออกหลังจากเลือกไปก่อนแล้ว)
+  // ฟังก์ชันจัดการเมื่อเลือกรูปแบบห้อง
+  const handleRoomTypeChange = (selectedOption: any) => {
+    setSelectedRoomType(selectedOption);
+    // Reset roommates เมื่อเปลี่ยนรูปแบบห้อง
+    const requiredRoommates = selectedOption
+      ? selectedOption.peoplePerRoom - 1
+      : 0;
+    setSelectedRoommates(Array(requiredRoommates).fill(null));
+  };
+
+  // ฟังก์ชันจัดการเมื่อเลือก roommate
   const handleRoommateChange = (selectedOption: any, index: number) => {
     const newSelectedRoommates = [...selectedRoommates];
     newSelectedRoommates[index] = selectedOption;
     setSelectedRoommates(newSelectedRoommates);
-    console.log(selectedRoommates);
   };
 
   const resetOptions = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setLoading(true);
-    setSelectedRoommates(Array(campInfo[0]?.max - 1).fill(null));
+    setSelectedRoomType(null);
+    setSelectedRoommates([]);
     setNote("");
 
     // รอให้ state อัพเดทเสร็จแล้วค่อย setLoading(false)
@@ -75,14 +110,22 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
     setError("");
 
     try {
+      // ตรวจสอบว่าเลือกรูปแบบห้องแล้วหรือยัง
+      if (!selectedRoomType) {
+        setError("กรุณาเลือกรูปแบบห้อง");
+        setLoading(false);
+        return;
+      }
+
       // แปลง selectedRoommates ให้เป็น array ของ id เท่านั้น (กรองค่า null ออก)
       const roommateIds = selectedRoommates
         .filter((roommate) => roommate !== null)
         .map((roommate) => roommate.value);
 
       // เช็คว่าเลือกครบหรือไม่
-      if (roommateIds.length < campInfo[0]?.max - 1) {
-        setError(`กรุณาเลือกเพื่อนร่วมห้องให้ครบ ${campInfo[0]?.max - 1} คน`);
+      const requiredRoommates = selectedRoomType.peoplePerRoom - 1;
+      if (roommateIds.length < requiredRoommates) {
+        setError(`กรุณาเลือกเพื่อนร่วมห้องให้ครบ ${requiredRoommates} คน`);
         setLoading(false);
         return;
       }
@@ -95,13 +138,15 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
         camp_id: campInfo[0]?.id,
         members: allMembers,
         note: note,
+        roomTypeIndex: selectedRoomType.value, // ส่ง index ของรูปแบบห้องที่เลือก
       });
 
       // แสดงข้อความสำเร็จ
       alert("บันทึกห้องพักเรียบร้อย");
 
       // Reset form
-      setSelectedRoommates(Array(campInfo[0]?.max - 1).fill(null));
+      setSelectedRoomType(null);
+      setSelectedRoommates([]);
       setNote("");
       router.push("/");
     } catch (error: any) {
@@ -114,7 +159,18 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
     }
   };
 
-  console.log("Filter:", filteredStudents);
+  // ฟังก์ชันแสดงรูปแบบห้องทั้งหมด
+  const formatAllRoomTypes = (roomTypes: any) => {
+    if (!roomTypes || !Array.isArray(roomTypes)) return "-";
+
+    return roomTypes
+      .map((rt: any) => {
+        const usedRooms = calculateUsedRooms(rt.peoplePerRoom);
+        const remainingRooms = rt.roomCount - usedRooms;
+        return `${rt.peoplePerRoom} คน/ห้อง (เหลือ ${remainingRooms}/${rt.roomCount} ห้อง)`;
+      })
+      .join(", ");
+  };
 
   return (
     <div className="container mx-auto px-4 font-[Prompt]">
@@ -159,9 +215,9 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
               <div className="sm:flex gap-3.5">
                 <div className="flex gap-3">
                   <i className="fa-solid fa-user text-green-500 w-5"></i>
-                  <p>จำนวนคน : </p>
+                  <p>รูปแบบห้อง : </p>
                 </div>
-                {campInfo[0]?.max} คน/ห้อง
+                {formatAllRoomTypes(campInfo[0]?.roomTypes)}
               </div>
             </div>
           </div>
@@ -174,29 +230,77 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
               </div>
               <h3 className="text-gray-600 font-medium">{student.name}</h3>
             </div>
-            <div className="gap-2 flex flex-col mb-7">
-              {Array.from({ length: campInfo[0]?.max - 1 }, (_, i) => (
-                <div
-                  key={`roommate-${i}`}
-                  className="sm:flex gap-5 items-center"
-                >
-                  <div className="text-gray-600">
-                    <h3>เพื่อนร่วมห้อง (Roommate) คนที่ {i + 1} : </h3>
-                  </div>
-                  <Select
-                    instanceId={`roommate-select-${i}`}
-                    options={getAvailableOptions(i)}
-                    value={selectedRoommates[i]}
-                    onChange={(selectedOption) =>
-                      handleRoommateChange(selectedOption, i)
-                    }
-                    className="w-full"
-                    placeholder="เลือกเพื่อนร่วมห้อง..."
-                    isClearable
-                  />
-                </div>
-              ))}{" "}
+
+            {/* เลือกรูปแบบห้อง */}
+            <div className="mb-7">
+              <label className="block text-gray-700 font-semibold mb-2">
+                เลือกรูปแบบห้อง <span className="text-red-500">*</span>
+              </label>
+              <Select
+                instanceId="room-type-select"
+                options={roomTypeOptions}
+                value={selectedRoomType}
+                onChange={handleRoomTypeChange}
+                className="w-full"
+                placeholder="กรุณาเลือกรูปแบบห้องก่อน..."
+                isClearable
+                isOptionDisabled={(option) => option.isDisabled}
+                noOptionsMessage={() =>
+                  roomTypeOptions.length === 0
+                    ? "ไม่มีห้องว่าง (เต็มทุกรูปแบบ)"
+                    : "ไม่พบตัวเลือก"
+                }
+              />
+              {selectedRoomType && (
+                <p className="text-sm text-gray-500 mt-2">
+                  คุณเลือกห้องแบบ {selectedRoomType.peoplePerRoom} คน/ห้อง
+                  (ต้องเลือกเพื่อนร่วมห้องอีก{" "}
+                  {selectedRoomType.peoplePerRoom - 1} คน)
+                </p>
+              )}
+              {roomTypeOptions.length === 0 && (
+                <Alert severity="warning" className="mt-2">
+                  <AlertTitle>แจ้งเตือน</AlertTitle>
+                  ห้องเต็มทุกรูปแบบแล้ว ไม่สามารถบันทึกห้องพักได้
+                </Alert>
+              )}
             </div>
+
+            {/* เลือกเพื่อนร่วมห้อง - แสดงเฉพาะเมื่อเลือกรูปแบบห้องแล้ว */}
+            {selectedRoomType && (
+              <div className="gap-2 flex flex-col mb-7">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                  เลือกเพื่อนร่วมห้อง
+                </h3>
+                {Array.from(
+                  { length: selectedRoomType.peoplePerRoom - 1 },
+                  (_, i) => (
+                    <div
+                      key={`roommate-${i}`}
+                      className="sm:flex gap-5 items-center"
+                    >
+                      <div className="text-gray-600 min-w-[250px]">
+                        <h3>
+                          เพื่อนร่วมห้อง (Roommate) คนที่ {i + 1} :{" "}
+                          <span className="text-red-500">*</span>
+                        </h3>
+                      </div>
+                      <Select
+                        instanceId={`roommate-select-${i}`}
+                        options={getAvailableOptions(i)}
+                        value={selectedRoommates[i]}
+                        onChange={(selectedOption) =>
+                          handleRoommateChange(selectedOption, i)
+                        }
+                        className="w-full"
+                        placeholder="เลือกเพื่อนร่วมห้อง..."
+                        isClearable
+                      />
+                    </div>
+                  )
+                )}
+              </div>
+            )}
 
             {/* หมายเหตุ */}
             <div className="mb-7">
@@ -229,7 +333,7 @@ const CampForm = ({ availableStudents, campInfo, student }: any) => {
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || roomTypeOptions.length === 0}
                 className="disabled:opacity-50 cursor-pointer text-white py-2 px-4 bg-blue-800 hover:bg-blue-600 transition-colors duration-300 rounded-lg"
               >
                 {loading ? "กำลังบันทึก..." : "บันทึกห้องพัก"}

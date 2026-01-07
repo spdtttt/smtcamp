@@ -14,7 +14,7 @@ model Student {
   name        String?
   gender      String?
   class       Int?
-  national_id String?
+  national_id String? @unique
 
   @@map("Student")
 }
@@ -24,8 +24,8 @@ model Camp {
   title     String?
   class     Int?
   dateStart DateTime? @db.Date
-  max       Int?
   dateEnd   DateTime? @db.Date
+  roomTypes Json[]    @db.Json
   Room      Room[]
 }
 

@@ -24,8 +24,23 @@ const CampList = ({ camps, student }: { camps: any; student: any }) => {
       alert("เกิดข้อผิดพลาด ไม่สามารถลบได้");
       return;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  };
+
+  // ฟังก์ชันแสดงรูปแบบห้อง
+  const formatRoomTypes = (roomTypes: any) => {
+    if (!roomTypes) return "-";
+
+    // ถ้าเป็น array ของ objects
+    if (Array.isArray(roomTypes)) {
+      return roomTypes
+        .map((rt: any) => `${rt.peoplePerRoom} คน/ห้อง (${rt.roomCount} ห้อง)`)
+        .join(", ");
+    }
+
+    // ถ้าเป็นค่าเดี่ยว (backward compatibility)
+    return `${roomTypes} คน/ห้อง`;
   };
 
   return (
@@ -81,7 +96,7 @@ const CampList = ({ camps, student }: { camps: any; student: any }) => {
                   </p>
                   <p className="flex text-center items-center gap-3">
                     <i className="fa-solid fa-user text-green-500 w-5"></i>
-                    {camp.max} คน/ห้อง
+                    {formatRoomTypes(camp.roomTypes)}
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-3">

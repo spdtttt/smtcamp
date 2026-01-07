@@ -8,6 +8,7 @@ import { getPastCamps } from "@/function/getPastCamps";
 
 interface Student {
   id: number;
+  national_id: number;
   student_id: number;
   name: string | null;
   gender: string | null;
@@ -39,14 +40,16 @@ const page = async () => {
     return !pastCamps.some((pastCamp) => pastCamp.id === camp.id);
   });
 
-  console.log(upComingCamps)
-
   return (
     <>
       <Navbar student={student} />
       <CampList camps={upComingCamps} student={student} />
-      <div className="mt-20 opacity-75">
+      <div className="mt-20 opacity-75 mb-25">
         <PastCamp pastCamps={pastCamps as any} />
+      </div>
+      <div className="flex flex-col mb-5 font-[Prompt] text-gray-500 font-medium text-center">
+        <div className="bg-gray-300 w-[85%] self-center h-0.5"></div>
+        <p className="mt-2">Created by Mos 6/9 Last Updated: 7 January 2026</p>
       </div>
     </>
   );
