@@ -27,8 +27,8 @@ const PastCamp = ({ pastCamps }: { pastCamps: Camp[] }) => {
         aria-label="ตารางค่ายที่ผ่านมา"
         classNames={{
           table: "rounded-lg overflow-hidden w-full shadow-sm text-sm",
-          th: "bg-gray-50 text-gray-500 font-medium p-2.5 pl-6 border-b",
-          td: "bg-white p-4 pl-6 border-b text-gray-700",
+          th: "bg-gray-50 text-gray-500 font-medium p-2.5 pl-6 border-b border-gray-200",
+          td: "bg-white p-4 pl-6 border-b border-gray-200 text-gray-700",
         }}
       >
         <TableHeader>

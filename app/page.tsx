@@ -49,7 +49,7 @@ const page = async () => {
       </div>
       <div className="fixed bottom-0 left-0 w-full flex justify-center flex-col font-[Prompt] text-gray-500 font-medium text-center py-4">
         <div className="bg-gray-300 w-[85%] self-center h-0.5"></div>
-        <p className="mt-2">Created by Mos 6/9 Latest Updated: 8 January 2026, 11:46 A.M.</p>
+        <p className="mt-2">Created by Mos 6/9 Latest Updated: 8 January 2026, 21:45 P.M.</p>
       </div>
     </>
   );

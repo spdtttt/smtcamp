@@ -4,6 +4,14 @@ import { formatDateRange } from "@/function/formatDateRange";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import { BeatLoader } from 'react-spinners'
 
 const ShowModal = ({ camp_id, isShowModal, setIsShowModal, student }: {
   camp_id: number | null,
@@ -12,7 +20,7 @@ const ShowModal = ({ camp_id, isShowModal, setIsShowModal, student }: {
   student: any,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [members, setMembers] = useState<string[]>([]); // เปลี่ยนเป็น string[]
+  const [members, setMembers] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
@@ -30,7 +38,6 @@ const ShowModal = ({ camp_id, isShowModal, setIsShowModal, student }: {
         student_id: student.id
       });
 
-      // response.data คือ array ของชื่อโดยตรง
       if (Array.isArray(response.data)) {
         setMembers(response.data);
       } else {
@@ -94,11 +101,10 @@ const ShowModal = ({ camp_id, isShowModal, setIsShowModal, student }: {
               {members.map((memberName, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg border ${
-                    memberName === student.name
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
+                  className={`p-4 rounded-lg border ${memberName === student.name
+                    ? "bg-blue-50 border-blue-200"
+                    : "bg-gray-50 border-gray-200"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
@@ -142,10 +148,234 @@ const ShowModal = ({ camp_id, isShowModal, setIsShowModal, student }: {
   );
 };
 
+const ShowAvailableStudentsModal = ({ camp_id, isShowAvailable, setIsShowAvailable }: {
+  camp_id: number | null,
+  isShowAvailable: boolean,
+  setIsShowAvailable: any
+}) => {
+  const [unAssignedStudents, setUnAssignedStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isShowAvailable && camp_id) {
+      fetchUnAssignedStudents();
+    }
+  }, [isShowAvailable, camp_id]);
+
+  if (!isShowAvailable) return null;
+
+  const fetchUnAssignedStudents = async () => {
+    if (!camp_id) return;
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/getAvailableStudents', {
+        camp_id: camp_id
+      })
+
+      setUnAssignedStudents(response.data?.availableStudents)
+    } catch (err) {
+      console.error('Error fetching unassigned students:', err);
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onClose = () => {
+    setIsShowAvailable(false);
+    setUnAssignedStudents([]);
+  };
+  return (
+    <>
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fadeIn"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl h-300 max-h-[80vh] shadow-2xl overflow-hidden transform transition-all flex flex-col animate-scaleIn"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h2 className="text-2xl font-semibold font-[Prompt]">
+              รายชื่อนักเรียนที่ยังไม่ได้ลงบันทึกห้องพัก
+            </h2>
+            <div>
+              <button
+                onClick={async () => {
+                  try {
+                    const text = unAssignedStudents
+                      .map((s: any) => s.name)
+                      .join("\n");
+                    await navigator.clipboard.writeText(text);
+                    alert("คัดลอกเรียบร้อย");
+                  } catch (e) {
+                    // fallback
+                    try {
+                      const text = unAssignedStudents
+                        .map((s: any) => s.name)
+                        .join("\n");
+                      const ta = document.createElement("textarea");
+                      ta.value = text;
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand("copy");
+                      document.body.removeChild(ta);
+                      alert("คัดลอกเรียบร้อย");
+                    } catch (err) {
+                      alert("ไม่สามารถคัดลอกได้");
+                    }
+                  }
+                }}
+                className="cursor-pointer font-medium px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-[Prompt] transition-all duration-300"
+              >
+                คัดลอกทั้งหมด
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <BeatLoader color="#5a5c7e" size={18} />
+              </div>
+            ) : unAssignedStudents.length === 0 ? (
+              <div className="text-gray-500 text-center py-10 font-[Prompt]">
+                ไม่มีนักเรียนที่ยังไม่ได้ลงบันทึกห้องพัก
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <TableContainer component={Paper}>
+                  <Table sx={{ minWidth: 650 }} aria-label="Rooms Table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell
+                          align="center"
+                          style={{
+                            fontFamily: "Prompt",
+                            width: "60px",
+                            color: "#65758b",
+                            fontWeight: "bold",
+                            fontSize: "17px",
+                          }}
+                        >
+                          ที่
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          style={{
+                            fontFamily: "Prompt",
+                            width: "150px",
+                            color: "#65758b",
+                            fontWeight: "bold",
+                            fontSize: "17px",
+                          }}
+                        >
+                          รหัสนักเรียน
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          style={{
+                            fontFamily: "Prompt",
+                            color: "#65758b",
+                            fontWeight: "bold",
+                            fontSize: "17px",
+                            width: "300px",
+                          }}
+                        >
+                          ชื่อ - สกุล
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          style={{
+                            fontFamily: "Prompt",
+                            color: "#65758b",
+                            fontWeight: "bold",
+                            fontSize: "17px",
+                            width: "200px",
+                          }}
+                        >
+                          เพศ
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {unAssignedStudents.map((student, index) => (
+                        <TableRow
+                          key={index}
+                          sx={{
+                            "&:last-child td, &:last-child th": { border: 0 },
+                          }}
+                        >
+                          <TableCell
+                            align="center"
+                            style={{
+                              fontFamily: "Prompt",
+                              color: "#65758b",
+                              fontSize: "15px",
+                            }}
+                            component="th"
+                            scope="row"
+                          >
+                            {index + 1}
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            style={{
+                              fontFamily: "Prompt",
+                              color: "black",
+                              fontSize: "15px",
+                            }}
+                          >
+                            {student.student_id}
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            style={{
+                              fontFamily: "Prompt",
+                              color: "black",
+                              fontSize: "15px",
+                            }}
+                          >
+                            {student.name}
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            style={{
+                              fontFamily: "Prompt",
+                              color: "black",
+                              fontSize: "15px",
+                            }}
+                          >
+                            {student.gender === "male" ? "ชาย" : "หญิง"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+            )}
+          </div>
+
+          <div className="font-[Prompt] font-semibold px-6 py-4 border-t flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors cursor-pointer"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 const CampList = ({ camps, student }: { camps: any; student: any }) => {
   const [loading, setLoading] = useState(false);
   const [isShowModal, setIsShowModal] = useState(false);
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
+  const [isShowAvailable, setIsShowAvailable] = useState(false);
 
   const deleteRoom = async (studentId: number) => {
     setLoading(true);
@@ -183,6 +413,11 @@ const CampList = ({ camps, student }: { camps: any; student: any }) => {
     setSelectedCampId(campId);
     setIsShowModal(true);
   };
+
+  const handleShowAvailableModal = (campId: number) => {
+    setSelectedCampId(campId);
+    setIsShowAvailable(true);
+  }
 
   return (
     <>
@@ -229,8 +464,8 @@ const CampList = ({ camps, student }: { camps: any; student: any }) => {
                     {camp.class === 409
                       ? "4/9"
                       : camp.class === 509
-                      ? "5/9"
-                      : "6/9"}
+                        ? "5/9"
+                        : "6/9"}
                   </p>
                   <p className="flex text-center items-center gap-3">
                     <i className="fa-solid fa-user text-green-500 w-5"></i>
@@ -238,9 +473,21 @@ const CampList = ({ camps, student }: { camps: any; student: any }) => {
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-3">
-                  <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center">
-                    ● เปิดให้บันทึก
-                  </span>
+                  {camp.isJoined === false ? (
+                    <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center">
+                      ● เปิดให้บันทึก
+                    </span>
+                  ) : student.student_id === 29258 ? (
+                    <button
+                      onClick={() => handleShowAvailableModal(camp.id)}
+                      className="group flex gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition shadow-lg shadow-blue-500/30">
+                      ดูเพื่อนที่ยังไม่ลง
+                    </button>
+                  ) : (
+                    <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full flex items-center">
+                      ● บันทึกแล้ว
+                    </span>
+                  )}
                   <div className="flex gap-2">
                     {camp.isJoined === false ? (
                       <Link href={`/${camp.id}`}>
@@ -274,11 +521,17 @@ const CampList = ({ camps, student }: { camps: any; student: any }) => {
         </div>
       </div>
 
-      <ShowModal 
-        camp_id={selectedCampId} 
-        isShowModal={isShowModal} 
-        setIsShowModal={setIsShowModal} 
+      <ShowModal
+        camp_id={selectedCampId}
+        isShowModal={isShowModal}
+        setIsShowModal={setIsShowModal}
         student={student}
+      />
+
+      <ShowAvailableStudentsModal
+        camp_id={selectedCampId}
+        isShowAvailable={isShowAvailable}
+        setIsShowAvailable={setIsShowAvailable}
       />
     </>
   );
