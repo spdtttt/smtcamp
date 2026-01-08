@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
+    
     // แปลงเป็น number array
     const validMemberIds = members
       .map((id: any) => {
@@ -29,30 +29,80 @@ export async function POST(req: Request) {
       );
     }
 
-    // ดึง Room ทั้งหมดของ camp_id นี้
-    const rooms = await prisma.room.findMany({
-      where: { camp_id: parseInt(camp_id, 10) },
+    const campIdNumber = parseInt(camp_id, 10);
+
+    // 🔹 ดึงข้อมูล Camp เพื่อเช็ค roomTypes
+    const camp = await prisma.camp.findUnique({
+      where: { id: campIdNumber },
+      include: { Room: true }
     });
 
-    // รวม member_ids ที่มีอยู่แล้ว
-    const existingMembers = rooms.flatMap((room) => room.member_ids);
+    if (!camp) {
+      return NextResponse.json(
+        { error: "Camp not found" },
+        { status: 404 }
+      );
+    }
 
-    // เช็คว่า member_ids ที่ส่งมาซ้ำหรือไม่
+    // 🔹 จำนวนสมาชิกที่ต้องการสร้างห้อง
+    const requestedPeopleCount = validMemberIds.length;
+
+    // 🔹 หา roomType ที่ตรงกับจำนวนคนที่ส่งมา
+    const matchingRoomType = (camp.roomTypes as any[]).find(
+      (rt: any) => rt.peoplePerRoom === requestedPeopleCount
+    );
+
+    if (!matchingRoomType) {
+      return NextResponse.json(
+        {
+          error: "Invalid room size",
+          message: `ไม่มีห้องสำหรับ ${requestedPeopleCount} คน ในค่ายนี้`,
+          availableRoomTypes: camp.roomTypes
+        },
+        { status: 400 }
+      );
+    }
+
+    // 🔹 นับจำนวนห้องที่มีอยู่แล้วสำหรับ roomType นี้
+    const existingRoomsOfThisType = camp.Room.filter(
+      (room: any) => room.member_ids.length === requestedPeopleCount
+    );
+
+    const currentRoomCount = existingRoomsOfThisType.length;
+    const maxRoomCount = matchingRoomType.roomCount;
+
+    // 🔹 เช็คว่าครบโควตาแล้วหรือยัง
+    if (currentRoomCount >= maxRoomCount) {
+      return NextResponse.json(
+        {
+          error: "Room quota exceeded",
+          message: `ห้องสำหรับ ${requestedPeopleCount} คนเต็มแล้ว (${currentRoomCount}/${maxRoomCount} ห้อง)`,
+          currentRoomCount,
+          maxRoomCount,
+          roomType: matchingRoomType
+        },
+        { status: 400 }
+      );
+    }
+
+    // 🔹 รวม member_ids ที่มีอยู่แล้วทั้งหมด
+    const existingMembers = camp.Room.flatMap((room: any) => room.member_ids);
+
+    // 🔹 เช็คว่า member_ids ที่ส่งมาซ้ำหรือไม่
     const duplicateMembers = validMemberIds.filter((id: number) =>
       existingMembers.includes(id)
     );
 
     if (duplicateMembers.length > 0) {
       // หา room ที่มี duplicate members
-      const conflictRooms = rooms.filter((room) =>
+      const conflictRooms = camp.Room.filter((room: any) =>
         room.member_ids.some((id: number) => duplicateMembers.includes(id))
       );
 
       return NextResponse.json(
         {
           error: "Some members are already assigned",
-          message:
-            "มีสมาชิกบางคนถูกจัดห้องไปแล้ว ไม่สามารถบันทึกได้",
+          message: "มีสมาชิกบางคนถูกจัดห้องไปแล้ว ไม่สามารถบันทึกได้",
           duplicateMembers,
           conflictRooms,
         },
@@ -60,18 +110,31 @@ export async function POST(req: Request) {
       );
     }
 
-    // ถ้าไม่มีซ้ำ ให้สร้าง room ใหม่
+    // 🔹 ถ้าผ่านทุกการตรวจสอบ ให้สร้าง room ใหม่
     const room = await prisma.room.create({
       data: {
-        camp_id: parseInt(camp_id, 10),
+        camp_id: campIdNumber,
         member_ids: validMemberIds,
         note: note,
       },
     });
 
-    return NextResponse.json(room);
+    return NextResponse.json({
+      success: true,
+      room,
+      message: `สร้างห้อง ${requestedPeopleCount} คนสำเร็จ (${currentRoomCount + 1}/${maxRoomCount} ห้อง)`,
+      quota: {
+        current: currentRoomCount + 1,
+        max: maxRoomCount,
+        remaining: maxRoomCount - currentRoomCount - 1
+      }
+    });
+
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to save room" }, { status: 500 });
+    console.error("Error creating room:", err);
+    return NextResponse.json(
+      { error: "Failed to save room", details: String(err) },
+      { status: 500 }
+    );
   }
 }

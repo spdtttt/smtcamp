@@ -8,7 +8,12 @@ import AlertTitle from "@mui/material/AlertTitle";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-const CampForm = ({ availableStudents, campInfo, student, existingRooms }: any) => {
+const CampForm = ({
+  availableStudents,
+  campInfo,
+  student,
+  existingRooms,
+}: any) => {
   const [selectedRoomType, setSelectedRoomType] = useState<any>(null);
   const [selectedRoommates, setSelectedRoommates] = useState<any[]>([]);
   const [note, setNote] = useState("");
@@ -138,11 +143,33 @@ const CampForm = ({ availableStudents, campInfo, student, existingRooms }: any) 
         camp_id: campInfo[0]?.id,
         members: allMembers,
         note: note,
-        roomTypeIndex: selectedRoomType.value, // ส่ง index ของรูปแบบห้องที่เลือก
       });
 
+      // ตรวจสอบ response จาก API
+      if (response.data.error) {
+        // แสดง error จาก API
+        setError(response.data.message || response.data.error);
+
+        // ถ้ามี duplicateMembers แสดงรายชื่อ
+        if (response.data.duplicateMembers) {
+          const duplicateNames = await Promise.all(
+            response.data.duplicateMembers.map(async (id: number) => {
+              const student = availableStudents.find((s: any) => s.id === id);
+              return student?.name || `ID: ${id}`;
+            })
+          );
+          setError(
+            `${response.data.message}\nสมาชิกที่ซ้ำ: ${duplicateNames.join(
+              ", "
+            )}`
+          );
+        }
+        setLoading(false);
+        return;
+      }
+
       // แสดงข้อความสำเร็จ
-      alert("บันทึกห้องพักเรียบร้อย");
+      alert(response.data.message || "บันทึกห้องพักเรียบร้อย");
 
       // Reset form
       setSelectedRoomType(null);
@@ -151,9 +178,45 @@ const CampForm = ({ availableStudents, campInfo, student, existingRooms }: any) 
       router.push("/");
     } catch (error: any) {
       console.error("Error:", error);
-      const errorMessage =
-        error.response?.data?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
-      setError(errorMessage);
+
+      // จัดการ error แบบละเอียด
+      if (error.response) {
+        const errorData = error.response.data;
+
+        // แสดง error message จาก API
+        let errorMessage =
+          errorData.message || errorData.error || "เกิดข้อผิดพลาด";
+
+        // กรณีห้องเต็ม
+        if (errorData.error === "Room quota exceeded") {
+          errorMessage = `${errorMessage}\n(${errorData.currentRoomCount}/${errorData.maxRoomCount} ห้อง)`;
+        }
+
+        // กรณีมีสมาชิกซ้ำ
+        if (
+          errorData.duplicateMembers &&
+          Array.isArray(errorData.duplicateMembers)
+        ) {
+          const duplicateNames = errorData.duplicateMembers.map(
+            (id: number) => {
+              const student = availableStudents.find((s: any) => s.id === id);
+              return student?.name || `ID: ${id}`;
+            }
+          );
+          errorMessage += `\n\nสมาชิกที่ซ้ำ: ${duplicateNames.join(", ")}`;
+        }
+
+        // กรณีจำนวนคนไม่ถูกต้อง
+        if (errorData.error === "Invalid room size") {
+          errorMessage = errorData.message;
+        }
+
+        setError(errorMessage);
+      } else if (error.request) {
+        setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง");
+      } else {
+        setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+      }
     } finally {
       setLoading(false);
     }
