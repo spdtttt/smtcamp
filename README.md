@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# คู่มือการใช้งานระบบจัดการค่ายและกิจกรรมสำหรับนักเรียน
 
-## Getting Started
+ยินดีต้อนรับสู่ระบบจัดการค่ายและกิจกรรมของโรงเรียนเมืองสุราษฎร์ธานี! ระบบนี้ช่วยให้นักเรียนสามารถลงทะเบียนเข้าร่วมและจัดห้องพักค่ายกิจกรรมต่างๆ ของห้องเรียนพิเศษ S.M.T. และตรวจสอบข้อมูลการจัดสรรห้องพักได้อย่างสะดวกสบาย
 
-First, run the development server:
+## เกี่ยวกับระบบ
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+ระบบนี้เป็นเว็บแอปพลิเคชันที่ออกแบบมาเพื่อจัดการค่ายและกิจกรรมของห้องเรียนพิเศษ S.M.T. ซึ่งมีการจัดค่ายกิจกรรมในทุกๆ เทอม นักเรียนสามารถ:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- ลงทะเบียนเข้าร่วมกิจกรรม
+- ตรวจสอบข้อมูลส่วนตัว
+- ดูรายละเอียดค่ายที่เข้าร่วม
+- บันทึกห้องพักและ Roommates ที่ประสงค์พักร่วมกัน
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## วิธีการใช้งาน
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. เข้าสู่ระบบ
+- เปิดเว็บไซต์ที่ [http://localhost:3000](http://localhost:3000) หรือ URL ที่กำหนด
+- กรอกข้อมูลเข้าสู่ระบบ (เลขประจำตัวนักเรียนและเลขบัตรประจำตัวประชาชน)
+- คลิกปุ่ม "เข้าสู่ระบบ"
 
-## Learn More
+### 2. ดูข้อมูลค่ายและกิจกรรม
+- หลังจากเข้าสู่ระบบ จะเห็นแดชบอร์ดหลัก
+- เลือกค่ายหรือกิจกรรมที่ต้องการเข้าร่วม
+- ตรวจสอบรายละเอียด เช่น วันที่จัด ชั้นเรียน และจำนวนคนต่อห้อง
 
-To learn more about Next.js, take a look at the following resources:
+### 3. ลงทะเบียนเข้าร่วมกิจกรรม
+- คลิกที่ปุ่ม "บันทึกห้องพัก" ในหน้ากิจกรรมที่สนใจ
+- ตรวจสอบรายละเอียดของกิจกรรม เลือกรูปแบบห้องพักที่ต้องการ
+- เลือก Roommates ที่ประสงค์พักร่วมด้วย ตามรูปแบบของห้องพัก
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. ตรวจสอบการจัดสรรห้องพัก
+- กลับมาที่หน้าหลักของ Website
+- กดปุ่ม "ดูรูมเมท" เพื่อตรวจสอบความถูกต้อง
+- หากมีข้อสงสัย ติดต่อครูผู้สอน
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## คำแนะนำสำหรับนักเรียน
 
-## Deploy on Vercel
+- **ข้อมูลส่วนตัว**: ตรวจสอบให้แน่ใจว่าข้อมูลส่วนตัวถูกต้องและครบถ้วน
+- **การลงทะเบียน**: ลงทะเบียนล่วงหน้าเพื่อให้มีที่นั่งเพียงพอ
+- **การติดต่อ**: หากพบปัญหาในการใช้งาน ติดต่อครูผู้สอนหรือผู้ดูแลระบบ
+- **ความปลอดภัย**: อย่าแชร์ข้อมูลเข้าสู่ระบบกับผู้อื่น
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## คำถามที่พบบ่อย (FAQ)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Q: ฉันจะเปลี่ยนข้อมูลส่วนตัวได้อย่างไร?**  
+A: ติดต่อครูผู้สอนเพื่อขอเปลี่ยนแปลงข้อมูล
+
+**Q: ฉันสามารถยกเลิกการลงทะเบียนและบันทึกห้องพักได้หรือไม่?**  
+A: ได้แน่นอน โดยการกด "ลบห้องเดิม"
+
+## ติดต่อเรา
+
+หากมีข้อสงสัยหรือปัญหาในการใช้งาน กรุณาติดต่อ:
+- ครูผู้สอนห้องเรียนพิเศษ S.M.T.
+- อีเมล: spdt101mos@gmail.com
+- โทร: 0964491903
